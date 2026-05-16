@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "lab-hero",
+      "description": "A high-tech laboratory environment",
+      "imageUrl": "https://picsum.photos/seed/lab1/1200/800",
+      "imageHint": "laboratory technology"
+    },
+    {
+      "id": "beaker",
+      "description": "Scientific glass beaker",
+      "imageUrl": "https://picsum.photos/seed/beaker/400/400",
+      "imageHint": "laboratory beaker"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Check if the user is an admin based on their user document
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Transactions Rules
+    match /transactions/{transactionId} {
+      // Admin can do anything
+      allow read, write: if isAdmin();
+      
+      // Borrowers can read their own transactions
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid);
+      
+      // Kiosk (if unauthenticated) or App (authenticated) can write new transactions
+      // In a real prod environment, we would use a dedicated service account or custom claims
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource.data.userId == request.auth.uid);
+    }
+
+    // Apparatus (Inventory) Rules
+    match /apparatus/{itemId} {
+      // Anyone can read inventory (kiosk and dashboard)
+      allow read: if true;
+      
+      // Only admin can write/update inventory
+      allow write: if isAdmin();
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      // User can read and edit their own profile (but not their role)
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId && 
+                    (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      
+      // Admin can read all users
+      allow read: if isAdmin();
+    }
+
+    // System Logs Rules
+    match /system_logs/{logId} {
+      allow create: if request.auth != null;
+      allow read: if isAdmin();
+    }
+  }
+}
