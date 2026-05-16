@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,19 +9,20 @@ import {
   LayoutDashboard, 
   History, 
   Bell, 
-  Settings, 
   LogOut, 
   Menu, 
   X,
   Package,
   ClipboardList,
   BarChart3,
-  Unlock
+  Unlock,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { auth } from "@/firebase/config";
-import { signOut } from "firebase/auth";
+import { auth, db } from "@/firebase/config";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -32,21 +32,46 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.role === role) {
+            setAuthorized(true);
+          } else {
+            // Mismatch: redirect to appropriate dashboard
+            router.push(userData.role === 'admin' ? "/admin/dashboard" : "/borrower/dashboard");
+          }
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [role, router]);
 
   const handleLogout = async () => {
-    if (role === 'admin') {
-      localStorage.removeItem("admin_session");
-      router.push("/admin/login");
-    } else {
-      await signOut(auth);
-      router.push("/login");
-    }
+    await signOut(auth);
+    router.push("/login");
   };
 
   const menuItems = role === 'borrower' 
@@ -63,7 +88,16 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         { icon: Unlock, label: "Remote Control", href: "/admin/unlock" },
       ];
 
-  if (!mounted) return null;
+  if (!mounted || loading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-headline animate-pulse">Verifying Credentials...</p>
+      </div>
+    );
+  }
+
+  if (!authorized) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
@@ -116,15 +150,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             !isSidebarOpen && "lg:justify-center"
           )}>
             <Avatar className="w-9 h-9 border border-border">
-              <AvatarImage src="" />
               <AvatarFallback className="bg-primary/20 text-primary text-xs">
                 {role === 'admin' ? 'AD' : 'BR'}
               </AvatarFallback>
             </Avatar>
             {isSidebarOpen && (
               <div className="overflow-hidden">
-                <p className="text-sm font-medium truncate">{role === 'admin' ? 'Lab Admin' : 'Borrower'}</p>
-                <p className="text-xs text-muted-foreground truncate">{role === 'admin' ? 'Facilitator' : 'Student'}</p>
+                <p className="text-sm font-medium truncate">{auth.currentUser?.displayName || (role === 'admin' ? 'Lab Admin' : 'Scholar')}</p>
+                <p className="text-xs text-muted-foreground truncate">{role === 'admin' ? 'Facilitator' : 'Borrower'}</p>
               </div>
             )}
           </div>

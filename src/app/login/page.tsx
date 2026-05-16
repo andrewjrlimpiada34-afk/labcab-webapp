@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -13,13 +12,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Beaker, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
-export default function BorrowerLogin() {
+export default function UnifiedLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +32,21 @@ export default function BorrowerLogin() {
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
       
       if (userDoc.exists()) {
-        router.push("/borrower/dashboard");
+        const userData = userDoc.data();
+        const role = userData.role;
+
+        toast({
+          title: "Authentication Successful",
+          description: `Welcome back, ${userData.name || 'User'}.`,
+        });
+
+        if (role === 'admin') {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/borrower/dashboard");
+        }
       } else {
-        setError("User profile not found in system. Please contact an admin.");
+        setError("User profile not found in system. Please contact an administrator.");
       }
     } catch (err: any) {
       console.error(err);
@@ -53,9 +66,9 @@ export default function BorrowerLogin() {
             </div>
           </div>
           <div>
-            <CardTitle className="text-3xl font-headline font-bold">Borrower Login</CardTitle>
+            <CardTitle className="text-3xl font-headline font-bold">System Access</CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
-              Access your lab transaction history and monitoring
+              Secure authentication for Laboratory Scholars and Facilitators
             </CardDescription>
           </div>
         </CardHeader>
@@ -94,7 +107,7 @@ export default function BorrowerLogin() {
               />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11" disabled={loading}>
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In to Dashboard"}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
             </Button>
             <div className="text-center">
               <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">

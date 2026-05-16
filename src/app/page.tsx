@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -29,13 +28,10 @@ export default function Home() {
             </span>
           </div>
           <div className="flex gap-4">
-            <Link href="/admin/login">
-              <Button variant="ghost" size="sm" className="hidden sm:flex">Facilitator Access</Button>
-            </Link>
             <Link href="/login">
               <Button size="sm" className="bg-primary hover:bg-primary/90">
                 <LogIn className="w-4 h-4 mr-2" />
-                Borrower Login
+                System Login
               </Button>
             </Link>
           </div>
@@ -54,32 +50,19 @@ export default function Home() {
         </h1>
         
         <p className="text-xl text-muted-foreground max-w-2xl mb-12 font-light">
-          Monitor borrowings, track real-time inventory, and secure your lab environment with our integrated kiosk management system.
+          A unified secure portal for students and facilitators to monitor borrowings, track real-time inventory, and secure the lab environment.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+        <div className="w-full max-w-md">
           <Link href="/login" className="group">
-            <div className="h-full p-8 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all duration-300 text-left relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <UserIcon className="w-24 h-24" />
-              </div>
-              <h3 className="text-2xl font-bold mb-2 font-headline group-hover:text-primary transition-colors">Borrower Portal</h3>
-              <p className="text-muted-foreground mb-6">Track your personal borrowing history, check due dates, and receive alerts for overdue items.</p>
-              <div className="flex items-center text-primary font-medium">
-                Enter Dashboard <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
-
-          <Link href="/admin/login" className="group">
-            <div className="h-full p-8 rounded-2xl border border-border bg-card hover:border-accent/50 transition-all duration-300 text-left relative overflow-hidden">
+            <div className="h-full p-8 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all duration-300 text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <ShieldCheck className="w-24 h-24" />
               </div>
-              <h3 className="text-2xl font-bold mb-2 font-headline group-hover:text-accent transition-colors">Admin Console</h3>
-              <p className="text-muted-foreground mb-6">Full system monitoring, inventory management, and automated reporting for lab facilitators.</p>
-              <div className="flex items-center text-accent font-medium">
-                Facilitator Access <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              <h3 className="text-2xl font-bold mb-2 font-headline group-hover:text-primary transition-colors">Enter Secure Portal</h3>
+              <p className="text-muted-foreground mb-6">Authenticate to access your specific dashboard and laboratory controls.</p>
+              <div className="flex items-center justify-center text-primary font-medium">
+                Sign In Now <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
