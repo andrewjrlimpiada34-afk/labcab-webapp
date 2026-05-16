@@ -1,36 +1,29 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { db } from "@/firebase/config";
-import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, increment, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
 import { Transaction, Apparatus } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-  Users, 
-  Package, 
   Activity, 
   AlertTriangle, 
-  Search, 
-  ArrowRight, 
-  Sparkles,
-  RefreshCw,
-  Unlock,
+  Package, 
+  Unlock, 
   ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { detectTransactionAnomalies, AnomalyDetectionOutput } from "@/ai/flows/detect-transaction-anomalies";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [inventory, setInventory] = useState<Apparatus[]>([]);
-  const [anomalies, setAnomalies] = useState<AnomalyDetectionOutput | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,26 +42,6 @@ export default function AdminDashboard() {
       unsubscribeInv();
     };
   }, []);
-
-  const runAiAnalysis = async () => {
-    setIsAnalyzing(true);
-    try {
-      const result = await detectTransactionAnomalies({ transactions: transactions as any });
-      setAnomalies(result);
-      toast({
-        title: "AI Analysis Complete",
-        description: `Found ${result.anomalies.length} potential anomalies in recent logs.`,
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Analysis Failed",
-        description: "Could not complete GenAI transaction analysis.",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   const remoteUnlock = async (cabinetId: string) => {
     try {
@@ -99,10 +72,6 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground">Real-time laboratory cabinet operations and security monitoring.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="sm" onClick={runAiAnalysis} disabled={isAnalyzing} className="bg-accent/10 border-accent/20 text-accent hover:bg-accent hover:text-accent-foreground transition-all">
-              {isAnalyzing ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-              AI Scan Anomalies
-            </Button>
             <Button size="sm" onClick={() => remoteUnlock("CAB-01")} className="bg-primary hover:bg-primary/90">
               <Unlock className="w-4 h-4 mr-2" />
               Master Unlock
@@ -151,25 +120,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* AI Insight Bar */}
-        {anomalies && anomalies.anomalies.length > 0 && (
-          <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-xl flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-1" />
-            <div className="flex-1">
-              <h4 className="font-headline font-bold text-destructive">AI Anomaly Alerts</h4>
-              <ul className="mt-2 space-y-1">
-                {anomalies.anomalies.map((a, i) => (
-                  <li key={i} className="text-sm text-muted-foreground">
-                    <span className="font-mono text-xs bg-destructive/20 px-1 rounded mr-2">ID: {a.transactionId.slice(-6)}</span>
-                    {a.reason}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Button size="sm" variant="outline" className="text-xs" onClick={() => setAnomalies(null)}>Dismiss</Button>
-          </div>
-        )}
 
         {/* Tables Container */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
