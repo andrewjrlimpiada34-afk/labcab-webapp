@@ -42,15 +42,22 @@ export function normalizeUserProfile(
   authUser: Pick<FirebaseUser, "uid" | "displayName" | "email">
 ): User {
   const name = getDisplayName(userData, authUser);
-
-  return {
+  const normalizedUser: User = {
     uid: cleanString(userData?.uid) || authUser.uid,
     name,
     email: cleanString(userData?.email) || authUser.email || "",
     role: userData?.role === "admin" ? "admin" : "borrower",
-    qrCode: cleanString(userData?.qrCode) || undefined,
-    studentId: cleanString(userData?.studentId) || undefined,
-    profilePic: cleanString(userData?.profilePic) || undefined,
-    course: cleanString(userData?.course) || undefined,
   };
+
+  const qrCode = cleanString(userData?.qrCode);
+  const studentId = cleanString(userData?.studentId);
+  const profilePic = cleanString(userData?.profilePic);
+  const course = cleanString(userData?.course);
+
+  if (qrCode) normalizedUser.qrCode = qrCode;
+  if (studentId) normalizedUser.studentId = studentId;
+  if (profilePic) normalizedUser.profilePic = profilePic;
+  if (course) normalizedUser.course = course;
+
+  return normalizedUser;
 }
