@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export function Logo({ className = "h-8" }: { className?: string }) {
