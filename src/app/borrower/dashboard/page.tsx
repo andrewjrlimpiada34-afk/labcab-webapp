@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -81,46 +80,70 @@ export default function BorrowerDashboard() {
   useEffect(() => {
     const now = new Date();
     setCurrentTime(now);
-    const clockTimer = setInterval(() => setCurrentTime(new Date()), 60000);
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const clockTimer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    let unsubscribeSnap: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setLoading(false);
         return;
       }
 
-      // Fetch user profile
-      getDoc(doc(db, "users", user.uid)).then(userDoc => {
+      try {
+        // Fetch user profile
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+
         if (userDoc.exists()) {
           setUserData(userDoc.data() as User);
         }
-      });
 
-      // Listen to transactions
-      const q = query(
-        collection(db, "transactions"),
-        where("userId", "==", user.uid)
-      );
+        // Transactions listener
+        const q = query(
+          collection(db, "transactions"),
+          where("userId", "==", user.uid)
+        );
 
-      const unsubscribeSnap = onSnapshot(q, (snapshot) => {
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-        const sortedDocs = docs.sort((a, b) => {
-          const timeA = a.borrowTime?.toMillis?.() || 0;
-          const timeB = b.borrowTime?.toMillis?.() || 0;
-          return timeB - timeA;
-        });
-        setTransactions(sortedDocs);
+        unsubscribeSnap = onSnapshot(
+          q,
+          (snapshot) => {
+            const docs = snapshot.docs.map(
+              (doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              } as Transaction)
+            );
+
+            const sortedDocs = docs.sort((a, b) => {
+              const timeA = a.borrowTime?.toMillis?.() || 0;
+              const timeB = b.borrowTime?.toMillis?.() || 0;
+              return timeB - timeA;
+            });
+
+            setTransactions(sortedDocs);
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Dashboard Error:", error);
+            setLoading(false);
+          }
+        );
+      } catch (err) {
+        console.error(err);
         setLoading(false);
-      }, (error) => {
-        console.error("Dashboard Error:", error);
-        setLoading(false);
-      });
-
-      return () => unsubscribeSnap();
+      }
     });
 
     return () => {
       unsubscribeAuth();
+
+      if (unsubscribeSnap) {
+        unsubscribeSnap();
+      }
+
       clearInterval(clockTimer);
     };
   }, []);
