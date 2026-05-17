@@ -102,7 +102,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   if (!authorized) return null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex overflow-hidden">
+    <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
@@ -113,7 +113,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:relative z-[70] h-screen transition-all duration-300 ease-in-out border-r border-border bg-card flex flex-col shrink-0",
+        "fixed lg:relative z-[70] h-full transition-all duration-300 ease-in-out border-r border-border bg-card flex flex-col shrink-0",
         // Mobile behavior
         isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0",
         // Desktop behavior
@@ -143,7 +143,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {/* User Profile Section - Moved to top for better ergonomics */}
+        {/* User Profile Section - Prominent position at top */}
         <div className="px-4 mb-2">
           <div className={cn(
             "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
@@ -203,10 +203,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative overflow-hidden">
+      {/* Main Content Container */}
+      <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* Mobile Navbar Header */}
-        <header className="lg:hidden h-16 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0">
+        <header className="lg:hidden h-16 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0 z-50">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
             <Menu size={20} />
           </Button>
@@ -216,6 +216,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
         </header>
 
+        {/* Scrollable Main Area */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
           <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
