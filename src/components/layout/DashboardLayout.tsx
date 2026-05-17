@@ -143,7 +143,31 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        {/* User Profile Section - Moved to top for better ergonomics */}
+        <div className="px-4 mb-2">
+          <div className={cn(
+            "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
+            !isSidebarOpen && "lg:justify-center lg:px-2"
+          )}>
+            <Avatar className="w-9 h-9 border border-border shrink-0">
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                {role === 'admin' ? 'AD' : 'BR'}
+              </AvatarFallback>
+            </Avatar>
+            {isSidebarOpen && (
+              <div className="overflow-hidden">
+                <p className="text-sm font-bold truncate leading-none mb-1 text-white">
+                  {auth.currentUser?.displayName || (role === 'admin' ? 'Lab Admin' : 'Scholar')}
+                </p>
+                <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
+                  {role === 'admin' ? 'Facilitator' : 'Borrower'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)}>
               <div className={cn(
@@ -165,30 +189,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </nav>
 
         <div className="p-4 border-t border-border mt-auto">
-          <div className={cn(
-            "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border",
-            !isSidebarOpen && "lg:justify-center lg:px-2"
-          )}>
-            <Avatar className="w-9 h-9 border border-border shrink-0">
-              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                {role === 'admin' ? 'AD' : 'BR'}
-              </AvatarFallback>
-            </Avatar>
-            {isSidebarOpen && (
-              <div className="overflow-hidden">
-                <p className="text-sm font-bold truncate leading-none mb-1">
-                  {auth.currentUser?.displayName || (role === 'admin' ? 'Lab Admin' : 'Scholar')}
-                </p>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                  {role === 'admin' ? 'Facilitator' : 'Borrower'}
-                </p>
-              </div>
-            )}
-          </div>
           <Button 
             variant="ghost" 
             className={cn(
-              "w-full mt-4 text-muted-foreground hover:text-destructive hover:bg-destructive/5 justify-start gap-3 rounded-xl",
+              "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/5 justify-start gap-3 rounded-xl transition-all",
               !isSidebarOpen && "lg:justify-center px-0"
             )}
             onClick={handleLogout}
