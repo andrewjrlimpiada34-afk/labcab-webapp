@@ -19,6 +19,8 @@ export interface Apparatus {
   id: string;
   name: string;
   stock: number;
+  /** Total available units (admin-modifiable). Must be >= stock */
+  total?: number;
   category: string;
   location: string;
   description?: string;

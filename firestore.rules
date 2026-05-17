@@ -28,9 +28,14 @@ service cloud.firestore {
       // Anyone can read inventory (kiosk and dashboard)
       allow read: if true;
       
-      // Only admin can write/update inventory
-      allow write: if isAdmin();
+      // Only admin can write/update inventory, and enforce stock <= total
+      allow write: if isAdmin() && (
+        // If total exists in incoming data, stock must not exceed it
+        (!('total' in request.resource.data)) ||
+        (request.resource.data.stock <= request.resource.data.total)
+      );
     }
+
 
     // User Profile Rules
     match /users/{userId} {

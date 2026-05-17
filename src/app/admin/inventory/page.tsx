@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { db } from "@/firebase/config";
-import { collection, onSnapshot, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, onSnapshot, doc, runTransaction } from "firebase/firestore";
 import { Apparatus } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,14 +30,28 @@ export default function AdminInventory() {
 
   const updateStock = async (id: string, amount: number) => {
     try {
-      await updateDoc(doc(db, "apparatus", id), {
-        stock: increment(amount)
+      await runTransaction(db, async (tx) => {
+        const ref = doc(db, "apparatus", id);
+        const snap = await tx.get(ref);
+        const data = snap.data() as Partial<Apparatus> | undefined;
+        const currentStock = typeof data?.stock === "number" ? data.stock : 0;
+        const total = typeof data?.total === "number" ? data.total : undefined;
+
+        const nextStock = currentStock + amount;
+        if (nextStock < 0) throw new Error("Stock cannot be negative.");
+        if (typeof total === "number" && nextStock > total) {
+          throw new Error("Stock cannot exceed total.");
+        }
+
+        tx.update(ref, { stock: nextStock });
       });
+
       toast({ title: "Stock Updated", description: "The inventory has been synchronized successfully." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not update stock levels." });
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error", description: e?.message || "Could not update stock levels." });
     }
   };
+
 
   const filteredItems = inventory.filter(i => 
     i.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -89,8 +103,10 @@ export default function AdminInventory() {
                     <TableHead>Asset Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Location</TableHead>
+                    <TableHead>Total</TableHead>
                     <TableHead>Stock Level</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -104,6 +120,38 @@ export default function AdminInventory() {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">{item.location}</TableCell>
                       <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={item.total ?? 0}
+                          onChange={(e) => {
+                            const nextTotal = Number(e.target.value);
+                            if (!Number.isFinite(nextTotal)) return;
+
+                            // Prevent invalid totals where stock would exceed total
+                            const clampedTotal = nextTotal < 0 ? 0 : nextTotal;
+                            if (clampedTotal < item.stock) {
+                              toast({
+                                variant: "destructive",
+                                title: "Invalid total",
+                                description: "Total cannot be less than current stock.",
+                              });
+                              return;
+                            }
+
+                            // Update total (and keep stock unchanged)
+                            updateDoc(doc(db, "apparatus", item.id), { total: clampedTotal }).catch(() => {
+                              toast({
+                                variant: "destructive",
+                                title: "Error",
+                                description: "Could not update total.",
+                              });
+                            });
+                          }}
+                          className="w-28 bg-card border-border"
+                        />
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <span className={item.stock < 5 ? "text-destructive font-bold animate-pulse" : "font-mono font-bold"}>
                             {item.stock}
@@ -111,6 +159,7 @@ export default function AdminInventory() {
                           {item.stock < 5 && <span className="text-[10px] text-destructive uppercase font-bold tracking-tighter">Low</span>}
                         </div>
                       </TableCell>
+
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button 
