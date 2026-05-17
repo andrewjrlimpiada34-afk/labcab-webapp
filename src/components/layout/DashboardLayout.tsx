@@ -30,6 +30,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/types";
 import { Logo } from "@/components/Logo";
+import { normalizeUserProfile } from "@/lib/user-profile";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -59,7 +60,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          const data = userDoc.data() as User;
+          const data = normalizeUserProfile(userDoc.data(), user);
           if (data.role === role) {
             setAuthorized(true);
             setUserData(data);
@@ -189,7 +190,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </div>
 
         {/* Profile Identity Card */}
-        <div className="px-6 mb-4 shrink-0">
+        <div
+          className={cn(
+            "px-6 mb-4 shrink-0",
+            !isSidebarOpen && "lg:hidden"
+          )}
+        >
           <div className={cn(
             "flex items-center gap-4 p-4 rounded-2xl bg-secondary/30 border border-border transition-all duration-300",
             !isSidebarOpen && "lg:justify-center lg:px-2"

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User as UserIcon, Mail, BookOpen, Save, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { normalizeUserProfile } from "@/lib/user-profile";
 
 export default function BorrowerProfile() {
   const [userData, setUserData] = useState<User | null>(null);
@@ -35,7 +36,7 @@ export default function BorrowerProfile() {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          const data = userDoc.data() as User;
+          const data = normalizeUserProfile(userDoc.data(), user);
           setUserData(data);
           setFormData({
             name: data.name || "",

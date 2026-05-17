@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/Logo";
+import { getFirstName, normalizeUserProfile } from "@/lib/user-profile";
+import { setDoc } from "firebase/firestore";
 
 export default function UnifiedLogin() {
   const [email, setEmail] = useState("");
@@ -34,11 +36,11 @@ export default function UnifiedLogin() {
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
       
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const role = userData.role;
-        // Robust extraction of first name
-        const fullName = userData.name || "";
-        const firstName = fullName.trim() ? fullName.split(/\s+/)[0] : "Scholar";
+        const normalizedUser = normalizeUserProfile(userDoc.data(), userCredential.user);
+        const role = normalizedUser.role;
+        const firstName = getFirstName(normalizedUser, userCredential.user);
+
+        await setDoc(doc(db, "users", userCredential.user.uid), normalizedUser, { merge: true });
 
         const toastDescription = role === 'admin' 
           ? "Welcome back, Facilitator!" 

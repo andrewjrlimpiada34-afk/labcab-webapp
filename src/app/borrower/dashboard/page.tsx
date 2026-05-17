@@ -25,6 +25,7 @@ import { format, formatDistanceToNow, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getFirstName, normalizeUserProfile } from "@/lib/user-profile";
 
 function CountdownTimer({ deadline }: { deadline: string }) {
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -89,7 +90,7 @@ export default function BorrowerDashboard() {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          setUserData(userDoc.data() as User);
+          setUserData(normalizeUserProfile(userDoc.data(), user));
         }
 
         const q = query(
@@ -142,8 +143,7 @@ export default function BorrowerDashboard() {
     return "Good Evening";
   };
 
-  const fullName = userData?.name || "";
-  const firstName = fullName.trim() ? fullName.split(/\s+/)[0] : "Scholar";
+  const firstName = getFirstName(userData);
   const activeTransactions = transactions.filter(t => t.status === 'active');
   const overdueCount = currentTime ? activeTransactions.filter(t => t.deadline && new Date(t.deadline) < currentTime).length : 0;
 
