@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { auth, db } from "@/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { Transaction, User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,37 +17,56 @@ export default function BorrowerDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const user = auth.currentUser;
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchUser = async () => {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        setUserData(userDoc.data() as User);
+    // Robust auth listener to ensure we have the user before fetching
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    };
-    fetchUser();
 
-    const q = query(
-      collection(db, "transactions"),
-      where("userId", "==", user.uid)
-    );
+      // Fetch user profile details
+      const fetchUser = async () => {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data() as User);
+        }
+      };
+      fetchUser();
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-      const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
-      setTransactions(sortedDocs);
-      setLoading(false);
+      // Setup real-time transactions listener
+      const q = query(
+        collection(db, "transactions"),
+        where("userId", "==", user.uid)
+      );
+
+      const unsubscribeSnap = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+        // Manual sorting to avoid composite index requirement
+        const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+        setTransactions(sortedDocs);
+        setLoading(false);
+      }, (error) => {
+        console.error("Dashboard Snapshot Error:", error);
+        setLoading(false);
+      });
+
+      return () => unsubscribeSnap();
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    return () => unsubscribeAuth();
+  }, []);
 
   const firstName = userData?.name?.split(' ')[0] || 'Scholar';
   const activeTransactions = transactions.filter(t => t.status === 'active');
-  const overdueCount = activeTransactions.filter(t => new Date(t.deadline) < new Date()).length;
+  const overdueCount = activeTransactions.filter(t => {
+    try {
+      return new Date(t.deadline) < new Date();
+    } catch {
+      return false;
+    }
+  }).length;
 
   if (loading) {
     return (

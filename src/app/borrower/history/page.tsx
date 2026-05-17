@@ -3,37 +3,57 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { auth, db } from "@/firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Transaction } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { History, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { History, Calendar, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function BorrowerHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const user = auth.currentUser;
 
   useEffect(() => {
-    if (!user) return;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-    const q = query(
-      collection(db, "transactions"),
-      where("userId", "==", user.uid)
-    );
+      const q = query(
+        collection(db, "transactions"),
+        where("userId", "==", user.uid)
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
-      const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
-      setTransactions(sortedDocs);
-      setLoading(false);
+      const unsubscribeSnap = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+        const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+        setTransactions(sortedDocs);
+        setLoading(false);
+      }, (error) => {
+        console.error("History Snapshot Error:", error);
+        setLoading(false);
+      });
+
+      return () => unsubscribeSnap();
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    return () => unsubscribeAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout role="borrower">
+        <div className="h-full flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 animate-spin text-accent" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="borrower">
@@ -58,7 +78,7 @@ export default function BorrowerHistory() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {transactions.length === 0 && !loading ? (
+            {transactions.length === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
                 <p>No transaction history found.</p>
