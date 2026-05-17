@@ -36,10 +36,11 @@ export default function UnifiedLogin() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const role = userData.role;
+        const firstName = userData.name?.split(' ')[0] || 'Scholar';
 
         const toastDescription = role === 'admin' 
           ? "Welcome, Admin!" 
-          : `Welcome back, ${userData.name?.split(' ')[0] || 'Scholar'}.`;
+          : `Welcome back, ${firstName}!`;
 
         toast({
           title: "Authentication Successful",
