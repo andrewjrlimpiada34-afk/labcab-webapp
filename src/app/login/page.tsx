@@ -35,9 +35,14 @@ export default function UnifiedLogin() {
         const userData = userDoc.data();
         const role = userData.role;
 
+        // Customizing the toast message based on role as requested
+        const toastDescription = role === 'admin' 
+          ? "Welcome, Admin!" 
+          : `Welcome back, ${userData.name?.split(' ')[0] || 'Scholar'}.`;
+
         toast({
           title: "Authentication Successful",
-          description: `Welcome back, ${userData.name || 'User'}.`,
+          description: toastDescription,
         });
 
         if (role === 'admin') {
