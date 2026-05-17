@@ -174,7 +174,7 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader className="bg-muted/20">
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="font-bold py-5 pl-8 uppercase tracking-widest text-[10px]">Scholar</TableHead>
+                      <TableHead className="font-bold py-5 pl-8 uppercase tracking-widest text-[10px]">Borrower</TableHead>
                       <TableHead className="font-bold uppercase tracking-widest text-[10px]">Apparatus</TableHead>
                       <TableHead className="font-bold uppercase tracking-widest text-[10px]">Time</TableHead>
                       <TableHead className="font-bold pr-8 text-right uppercase tracking-widest text-[10px]">Status</TableHead>

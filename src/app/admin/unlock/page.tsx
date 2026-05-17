@@ -113,7 +113,7 @@ export default function AdminUnlock() {
           <div className="space-y-2">
             <h4 className="font-bold text-primary text-xl font-headline">Facilitator Protocol</h4>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-              Every remote unlock action is logged with an administrative timestamp and associated with your account. Ensure you have visually verified the Scholar requiring access before triggering the remote override.
+              Every remote unlock action is logged with an administrative timestamp and associated with your account. Ensure you have visually verified the Borrower requiring access before triggering the remote override.
             </p>
           </div>
         </div>

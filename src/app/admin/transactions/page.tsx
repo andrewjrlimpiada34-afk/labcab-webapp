@@ -79,7 +79,7 @@ export default function AdminTransactions() {
               <Table>
                 <TableHeader className="bg-muted/20">
                   <TableRow className="border-border/50">
-                    <TableHead className="py-5 pl-8 font-bold uppercase tracking-widest text-[10px]">Scholar</TableHead>
+                    <TableHead className="py-5 pl-8 font-bold uppercase tracking-widest text-[10px]">Borrower</TableHead>
                     <TableHead className="font-bold uppercase tracking-widest text-[10px]">Equipment</TableHead>
                     <TableHead className="font-bold uppercase tracking-widest text-[10px]">Borrowed</TableHead>
                     <TableHead className="font-bold uppercase tracking-widest text-[10px]">Deadline</TableHead>
@@ -92,7 +92,7 @@ export default function AdminTransactions() {
                     <TableRow key={tx.id} className="border-border/50 hover:bg-primary/5 transition-colors">
                       <TableCell className="py-6 pl-8">
                         <div className="flex items-center gap-2">
-                          <User className="w-3 h-3 opacity-40" />
+                          <User className="w-4 h-4 opacity-50" />
                           <span className="font-bold">{tx.userName}</span>
                         </div>
                       </TableCell>
