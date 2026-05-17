@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -86,14 +87,11 @@ export default function BorrowerDashboard() {
       }
 
       try {
-        // Fetch user profile
         const userDoc = await getDoc(doc(db, "users", user.uid));
-
         if (userDoc.exists()) {
           setUserData(userDoc.data() as User);
         }
 
-        // Transactions listener
         const q = query(
           collection(db, "transactions"),
           where("userId", "==", user.uid)
@@ -131,11 +129,7 @@ export default function BorrowerDashboard() {
 
     return () => {
       unsubscribeAuth();
-
-      if (unsubscribeSnap) {
-        unsubscribeSnap();
-      }
-
+      if (unsubscribeSnap) unsubscribeSnap();
       clearInterval(clockTimer);
     };
   }, []);
@@ -145,10 +139,11 @@ export default function BorrowerDashboard() {
     const hour = currentTime.getHours();
     if (hour < 12) return "Good Morning";
     if (hour < 18) return "Good Afternoon";
-    return "Good Night";
+    return "Good Evening";
   };
 
-  const firstName = userData?.name?.split(' ')[0] || 'Scholar';
+  const fullName = userData?.name || "";
+  const firstName = fullName.trim() ? fullName.split(/\s+/)[0] : "Scholar";
   const activeTransactions = transactions.filter(t => t.status === 'active');
   const overdueCount = currentTime ? activeTransactions.filter(t => t.deadline && new Date(t.deadline) < currentTime).length : 0;
 
@@ -183,7 +178,6 @@ export default function BorrowerDashboard() {
             </div>
           </div>
 
-          {/* Action Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="bg-card/40 border-accent/20 hover:border-accent/50 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative rounded-3xl shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -233,7 +227,9 @@ export default function BorrowerDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="text-5xl font-bold font-headline mb-1">2</div>
+                <div className="text-5xl font-bold font-headline mb-1">
+                  {transactions.filter(t => t.status === 'returned').length > 0 ? "1" : "0"}
+                </div>
                 <p className="text-xs text-muted-foreground font-medium">System notifications</p>
               </CardContent>
             </Card>
