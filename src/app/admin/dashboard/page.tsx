@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,8 @@ import {
   Package, 
   Unlock, 
   ShieldCheck,
-  TrendingUp
+  TrendingUp,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -68,18 +68,18 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout role="admin">
       <div className="flex flex-col gap-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/50 pb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
           <div>
-            <h1 className="text-5xl font-bold font-headline mb-3 text-white tracking-tight">
-              Welcome, <span className="text-primary">Admin!</span>
+            <h1 className="text-4xl md:text-5xl font-bold font-headline mb-3 text-white tracking-tight leading-none">
+              Welcome, <span className="text-primary italic">Admin!</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl font-light">
               Laboratory Command Center: Monitoring real-time inventory and security protocols.
             </p>
           </div>
           <div className="flex gap-4">
-            <Button size="lg" onClick={() => remoteUnlock("CAB-01")} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-              <Unlock className="w-5 h-5 mr-2" />
+            <Button size="lg" onClick={() => remoteUnlock("CAB-01")} className="bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-xl h-14 px-8 font-bold text-base transition-all hover:scale-105 active:scale-95">
+              <Unlock className="w-5 h-5 mr-3" />
               Master Override
             </Button>
           </div>
@@ -87,126 +87,150 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-card/30 border-primary/10 hover:border-primary/30 transition-all duration-300 backdrop-blur-sm">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Active Borrows</CardTitle>
-              <Activity className="h-5 w-5 text-primary" />
+          <Card className="bg-card/40 border-primary/10 hover:border-primary/30 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 relative z-10">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Active Borrows</CardTitle>
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold font-headline">{activeCount}</div>
+            <CardContent className="relative z-10">
+              <div className="text-5xl font-bold font-headline mb-1">{activeCount}</div>
+              <p className="text-xs text-muted-foreground">Concurrent check-outs</p>
             </CardContent>
           </Card>
-          <Card className="bg-card/30 border-destructive/10 hover:border-destructive/30 transition-all duration-300 backdrop-blur-sm">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stock Alerts</CardTitle>
-              <AlertTriangle className={lowStock.length > 0 ? "h-5 w-5 text-destructive animate-pulse" : "h-5 w-5 text-muted-foreground"} />
+
+          <Card className="bg-card/40 border-destructive/10 hover:border-destructive/30 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 relative z-10">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Stock Alerts</CardTitle>
+              <div className={cn("p-2 rounded-lg", lowStock.length > 0 ? "bg-destructive/10 animate-pulse" : "bg-muted/10")}>
+                <AlertTriangle className={lowStock.length > 0 ? "h-5 w-5 text-destructive" : "h-5 w-5 text-muted-foreground"} />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className={cn("text-4xl font-bold font-headline", lowStock.length > 0 ? "text-destructive" : "")}>
+            <CardContent className="relative z-10">
+              <div className={cn("text-5xl font-bold font-headline mb-1", lowStock.length > 0 ? "text-destructive" : "")}>
                 {lowStock.length}
               </div>
+              <p className="text-xs text-muted-foreground">Critical replenishment required</p>
             </CardContent>
           </Card>
-          <Card className="bg-card/30 border-accent/10 hover:border-accent/30 transition-all duration-300 backdrop-blur-sm">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Assets</CardTitle>
-              <Package className="h-5 w-5 text-accent" />
+
+          <Card className="bg-card/40 border-accent/10 hover:border-accent/30 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 relative z-10">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Total Assets</CardTitle>
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Package className="h-5 w-5 text-accent" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold font-headline">{inventory.length}</div>
+            <CardContent className="relative z-10">
+              <div className="text-5xl font-bold font-headline mb-1">{inventory.length}</div>
+              <p className="text-xs text-muted-foreground">Registered apparatus</p>
             </CardContent>
           </Card>
-          <Card className="bg-card/30 border-green-500/10 hover:border-green-500/30 transition-all duration-300 backdrop-blur-sm">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">System Health</CardTitle>
-              <ShieldCheck className="h-5 w-5 text-green-400" />
+
+          <Card className="bg-card/40 border-green-500/10 hover:border-green-500/30 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 relative z-10">
+              <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">System Health</CardTitle>
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-green-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold font-headline text-green-400">100%</div>
+            <CardContent className="relative z-10">
+              <div className="text-5xl font-bold font-headline text-green-400 mb-1">100%</div>
+              <p className="text-xs text-muted-foreground">Encrypted & Operational</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Tables Container */}
-        <div className="grid grid-cols-1 xl:grid-cols-7 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* Live Feed */}
-          <Card className="xl:col-span-4 border-border/50 bg-card/20 overflow-hidden backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-secondary/10 px-6 py-5">
+          <Card className="xl:col-span-8 border-border/50 bg-card/10 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-secondary/10 px-8 py-6">
               <div>
-                <CardTitle className="font-headline text-xl">Real-Time Activity</CardTitle>
-                <CardDescription>Live equipment transaction stream</CardDescription>
+                <CardTitle className="font-headline text-2xl">Real-Time Activity</CardTitle>
+                <CardDescription className="text-sm">Live equipment transaction stream</CardDescription>
               </div>
-              <Button variant="outline" size="sm" asChild className="border-primary/20 hover:bg-primary/5">
-                <Link href="/admin/transactions">View Archive</Link>
+              <Button variant="outline" size="sm" asChild className="border-primary/20 hover:bg-primary/5 rounded-xl px-5">
+                <Link href="/admin/transactions" className="flex items-center gap-2">
+                  <TrendingUp size={14} /> Full Log
+                </Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="font-bold py-4">Borrower</TableHead>
-                    <TableHead className="font-bold">Equipments</TableHead>
-                    <TableHead className="font-bold">Time</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map(tx => (
-                    <TableRow key={tx.id} className="border-border/50 hover:bg-primary/5 transition-colors">
-                      <TableCell className="font-semibold">{tx.userName}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[200px]">
-                        {tx.items.map(i => i.name).join(", ")}
-                      </TableCell>
-                      <TableCell className="text-sm font-mono opacity-80">
-                        {format(tx.borrowTime.toDate(), "HH:mm:ss")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={tx.status === 'active' ? "default" : "secondary"} 
-                          className={cn(
-                            "px-3 py-1",
-                            tx.status === 'active' ? "bg-primary/20 text-primary border-primary/30" : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {tx.status.toUpperCase()}
-                        </Badge>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/20">
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="font-bold py-5 pl-8 uppercase tracking-widest text-[10px]">Scholar</TableHead>
+                      <TableHead className="font-bold uppercase tracking-widest text-[10px]">Apparatus</TableHead>
+                      <TableHead className="font-bold uppercase tracking-widest text-[10px]">Time</TableHead>
+                      <TableHead className="font-bold pr-8 text-right uppercase tracking-widest text-[10px]">Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map(tx => (
+                      <TableRow key={tx.id} className="border-border/50 hover:bg-primary/5 transition-colors group">
+                        <TableCell className="font-bold py-5 pl-8 group-hover:text-primary transition-colors">{tx.userName}</TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-[250px] text-sm">
+                          {tx.items.map(i => i.name).join(", ")}
+                        </TableCell>
+                        <TableCell className="text-sm font-mono opacity-60">
+                          {format(tx.borrowTime.toDate(), "HH:mm:ss")}
+                        </TableCell>
+                        <TableCell className="text-right pr-8">
+                          <Badge 
+                            className={cn(
+                              "px-3 py-1 font-bold tracking-tighter rounded-md",
+                              tx.status === 'active' 
+                                ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_10px_rgba(26,163,255,0.2)]" 
+                                : "bg-muted text-muted-foreground border border-border"
+                            )}
+                          >
+                            {tx.status.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
 
           {/* Inventory Summary */}
-          <Card className="xl:col-span-3 border-border/50 bg-card/20 overflow-hidden backdrop-blur-xl">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-secondary/10 px-6 py-5">
+          <Card className="xl:col-span-4 border-border/50 bg-card/10 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 bg-secondary/10 px-8 py-6">
               <div>
-                <CardTitle className="font-headline text-xl">Inventory Status</CardTitle>
-                <CardDescription>Critical asset levels</CardDescription>
+                <CardTitle className="font-headline text-2xl">Inventory</CardTitle>
+                <CardDescription className="text-sm">Critical asset levels</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/inventory" className="text-accent hover:text-accent hover:bg-accent/10">Manage</Link>
+              <Button variant="ghost" size="icon" asChild className="hover:bg-accent/10 hover:text-accent rounded-full">
+                <Link href="/admin/inventory"><Package size={18} /></Link>
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/20">
                   <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="font-bold py-4">Asset</TableHead>
-                    <TableHead className="font-bold">Stock</TableHead>
-                    <TableHead className="font-bold text-right">Indicator</TableHead>
+                    <TableHead className="font-bold py-5 pl-8 uppercase tracking-widest text-[10px]">Asset</TableHead>
+                    <TableHead className="font-bold uppercase tracking-widest text-[10px]">Stock</TableHead>
+                    <TableHead className="font-bold pr-8 text-right uppercase tracking-widest text-[10px]">Pulse</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {inventory.slice(0, 8).map(item => (
                     <TableRow key={item.id} className="border-border/50 hover:bg-accent/5 transition-colors">
-                      <TableCell className="font-semibold">{item.name}</TableCell>
-                      <TableCell className="font-mono">{item.stock}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="font-bold py-5 pl-8 text-sm">{item.name}</TableCell>
+                      <TableCell className="font-mono font-bold">{item.stock}</TableCell>
+                      <TableCell className="text-right pr-8">
                         <div className={cn(
-                          "inline-block w-3 h-3 rounded-full shadow-lg shadow-black/50",
-                          item.stock < 5 ? "bg-destructive animate-pulse shadow-destructive/50" : "bg-accent shadow-accent/50"
+                          "inline-block w-2.5 h-2.5 rounded-full shadow-lg",
+                          item.stock < 5 ? "bg-destructive animate-ping shadow-destructive/50" : "bg-accent shadow-accent/50"
                         )} />
                       </TableCell>
                     </TableRow>
