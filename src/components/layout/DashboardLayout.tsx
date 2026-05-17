@@ -96,7 +96,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       toast({
         variant: "destructive",
         title: "Configuration Required",
-        description: "Please set your Cloudinary environment variables in the .env file.",
+        description: "Please set your Cloudinary environment variables.",
       });
       return;
     }
@@ -120,16 +120,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         setUserData(prev => prev ? { ...prev, profilePic: data.secure_url } : null);
         toast({
           title: "Profile Updated",
-          description: "Your new profile picture has been synchronized.",
+          description: "Your picture has been synchronized.",
         });
-      } else {
-        throw new Error(data.error?.message || "Upload failed");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: error.message || "Could not upload image to Cloudinary.",
+        description: "Could not upload to Cloudinary.",
       });
     } finally {
       setIsUploading(false);
@@ -164,7 +162,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
   return (
     <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] lg:hidden"
@@ -172,7 +169,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed lg:relative z-[70] h-full transition-all duration-300 ease-in-out border-r border-border bg-card flex flex-col shrink-0",
         isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0",
@@ -185,7 +181,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
 
-        <div className="p-6 flex items-center gap-3">
+        <div className="p-6 flex items-center gap-3 shrink-0">
           <div className="p-2 bg-primary/10 rounded-lg shrink-0">
             <Beaker className="w-6 h-6 text-primary" />
           </div>
@@ -200,8 +196,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {/* User Profile Section - Moved to Top */}
-        <div className="px-4 mb-2">
+        {/* Fixed Profile at top */}
+        <div className="px-4 mb-2 shrink-0">
           <div className={cn(
             "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
             !isSidebarOpen && "lg:justify-center lg:px-2"
@@ -260,7 +256,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border mt-auto">
+        <div className="p-4 border-t border-border mt-auto shrink-0">
           <Button 
             variant="ghost" 
             className={cn(
@@ -275,7 +271,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content Container */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         <header className="lg:hidden h-16 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0 z-50">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
@@ -287,7 +282,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* content area scrolls independently */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
           <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}

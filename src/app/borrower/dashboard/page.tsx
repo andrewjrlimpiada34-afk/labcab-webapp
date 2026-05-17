@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// Component for the live countdown with hydration safety
 function CountdownTimer({ deadline }: { deadline: string }) {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [isOverdue, setIsOverdue] = useState(false);
@@ -71,8 +70,17 @@ export default function BorrowerDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
+  const getGreeting = () => {
+    if (!currentTime) return "Welcome";
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Night";
+  };
+
   useEffect(() => {
-    setCurrentTime(new Date());
+    const now = new Date();
+    setCurrentTime(now);
     const clockTimer = setInterval(() => setCurrentTime(new Date()), 60000);
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -86,7 +94,7 @@ export default function BorrowerDashboard() {
         if (userDoc.exists()) {
           setUserData(userDoc.data() as User);
         }
-      }).catch(err => console.error("Error fetching user profile:", err));
+      });
 
       // Listen to transactions
       const q = query(
@@ -104,7 +112,7 @@ export default function BorrowerDashboard() {
         setTransactions(sortedDocs);
         setLoading(false);
       }, (error) => {
-        console.error("Dashboard Snapshot Error:", error);
+        console.error("Dashboard Error:", error);
         setLoading(false);
       });
 
@@ -124,16 +132,16 @@ export default function BorrowerDashboard() {
   return (
     <DashboardLayout role="borrower">
       {loading ? (
-        <div className="h-full flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
           <p className="text-muted-foreground font-headline animate-pulse uppercase tracking-[0.2em] text-xs">Accessing Workspace...</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-10 animate-in fade-in duration-700">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="pb-2">
               <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 text-white tracking-tight leading-tight">
-                Welcome back, <span className="text-primary italic">{firstName}!</span>
+                {getGreeting()}, <span className="text-primary italic">{firstName}!</span>
               </h1>
               <p className="text-muted-foreground text-lg font-light max-w-2xl">
                 System active. You have <span className="text-primary font-bold">{activeTransactions.length} items</span> in your possession.
@@ -208,7 +216,6 @@ export default function BorrowerDashboard() {
             </Card>
           </div>
 
-          {/* Main Content Layout */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
             <Card className="xl:col-span-8 border-border/50 bg-card/10 backdrop-blur-3xl overflow-hidden rounded-[2.5rem] shadow-2xl border-l-4 border-l-primary/30">
               <CardHeader className="bg-secondary/10 border-b border-border/50 px-8 py-7 flex flex-row items-center justify-between">
@@ -295,7 +302,7 @@ export default function BorrowerDashboard() {
                         <div className="w-1 bg-primary rounded-full group-hover:w-1.5 transition-all" />
                         <div>
                           <p className="text-sm font-bold text-white mb-1">Approaching Deadline</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">Your check-out of 'Compound Microscope' is due in 2 hours.</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">Your check-out is due soon. Please verify your equipment status.</p>
                         </div>
                       </div>
                     </div>
@@ -317,7 +324,9 @@ export default function BorrowerDashboard() {
                     {transactions.filter(t => t.status === 'returned').slice(0, 3).map((tx) => (
                       <div key={tx.id} className="p-6 hover:bg-white/5 transition-colors">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono opacity-40 uppercase tracking-widest">{format(tx.borrowTime.toDate(), "MMM dd")}</span>
+                          <span className="text-xs font-mono opacity-40 uppercase tracking-widest">
+                            {tx.borrowTime ? format(tx.borrowTime.toDate(), "MMM dd") : "..."}
+                          </span>
                           <CheckCircle2 className="w-3.5 h-3.5 text-green-500/50" />
                         </div>
                         <p className="text-sm font-bold text-white truncate">{tx.items.map(i => i.name).join(", ")}</p>
