@@ -10,13 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ClipboardList, CheckCircle2, Clock, Filter, User } from "lucide-react";
+import { Search, ClipboardList, CheckCircle2, Clock, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { User as UserProfile } from "@/lib/types";
+import { getBorrowerTypeIcon } from "@/lib/borrower-meta";
 
 export default function AdminTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [borrowers, setBorrowers] = useState<Record<string, UserProfile>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
@@ -25,7 +28,22 @@ export default function AdminTransactions() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setTransactions(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
     });
-    return () => unsubscribe();
+
+    const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const nextBorrowers: Record<string, UserProfile> = {};
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data() as UserProfile;
+        if (data.role === "borrower") {
+          nextBorrowers[doc.id] = { uid: doc.id, ...data };
+        }
+      });
+      setBorrowers(nextBorrowers);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeUsers();
+    };
   }, []);
 
   const handleReturn = async (txId: string) => {
@@ -92,7 +110,10 @@ export default function AdminTransactions() {
                     <TableRow key={tx.id} className="border-border/50 hover:bg-primary/5 transition-colors">
                       <TableCell className="py-6 pl-8">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 opacity-50" />
+                          {(() => {
+                            const BorrowerTypeIcon = getBorrowerTypeIcon(borrowers[tx.userId]);
+                            return <BorrowerTypeIcon className="w-5 h-5 shrink-0 opacity-70" />;
+                          })()}
                           <span className="font-bold">{tx.userName}</span>
                         </div>
                       </TableCell>

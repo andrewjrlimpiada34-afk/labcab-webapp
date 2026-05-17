@@ -16,6 +16,7 @@ import {
   ClipboardList,
   BarChart3,
   Unlock,
+  Users,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -165,6 +166,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         { icon: LayoutDashboard, label: "Command Hub", href: "/admin/dashboard" },
         { icon: Package, label: "Inventory", href: "/admin/inventory" },
         { icon: ClipboardList, label: "Transactions", href: "/admin/transactions" },
+        { icon: Users, label: "User Management", href: "/admin/users" },
         { icon: BarChart3, label: "Reports", href: "/admin/reports" },
         { icon: Unlock, label: "Remote Control", href: "/admin/unlock" },
       ];

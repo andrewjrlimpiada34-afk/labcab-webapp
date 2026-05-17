@@ -49,15 +49,24 @@ export function normalizeUserProfile(
     role: userData?.role === "admin" ? "admin" : "borrower",
   };
 
+  const borrowerType = cleanString(userData?.borrowerType);
   const qrCode = cleanString(userData?.qrCode);
   const studentId = cleanString(userData?.studentId);
   const profilePic = cleanString(userData?.profilePic);
   const course = cleanString(userData?.course);
+  const restrictionNote = cleanString(userData?.restrictionNote);
+  const missingItemCount =
+    typeof userData?.missingItemCount === "number" && Number.isFinite(userData.missingItemCount)
+      ? Math.max(0, userData.missingItemCount)
+      : 0;
 
+  if (borrowerType === "teacher" || borrowerType === "student") normalizedUser.borrowerType = borrowerType;
   if (qrCode) normalizedUser.qrCode = qrCode;
   if (studentId) normalizedUser.studentId = studentId;
   if (profilePic) normalizedUser.profilePic = profilePic;
   if (course) normalizedUser.course = course;
+  if (restrictionNote) normalizedUser.restrictionNote = restrictionNote;
+  if (missingItemCount > 0) normalizedUser.missingItemCount = missingItemCount;
 
   return normalizedUser;
 }

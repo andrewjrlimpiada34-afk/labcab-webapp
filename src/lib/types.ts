@@ -7,9 +7,12 @@ export interface User {
   email: string;
   qrCode?: string;
   role: 'borrower' | 'admin';
+  borrowerType?: 'student' | 'teacher';
   studentId?: string;
   profilePic?: string;
   course?: string;
+  missingItemCount?: number;
+  restrictionNote?: string;
 }
 
 export interface Apparatus {

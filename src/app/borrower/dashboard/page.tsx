@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getFirstName, normalizeUserProfile } from "@/lib/user-profile";
+import { getBorrowerStanding } from "@/lib/borrower-status";
 
 function CountdownTimer({ deadline }: { deadline: string }) {
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -144,8 +145,9 @@ export default function BorrowerDashboard() {
   };
 
   const firstName = getFirstName(userData);
-  const activeTransactions = transactions.filter(t => t.status === 'active');
-  const overdueCount = currentTime ? activeTransactions.filter(t => t.deadline && new Date(t.deadline) < currentTime).length : 0;
+  const standing = getBorrowerStanding(userData, transactions, currentTime || new Date());
+  const activeTransactions = standing.activeTransactions;
+  const overdueCount = standing.overdueTransactions.length;
 
   return (
     <DashboardLayout role="borrower">
@@ -156,6 +158,33 @@ export default function BorrowerDashboard() {
         </div>
       ) : (
         <div className="flex flex-col gap-10 animate-in fade-in duration-700">
+          {standing.isRestricted && (
+            <Card className="border-destructive/40 bg-destructive/10 backdrop-blur-xl rounded-3xl shadow-2xl">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-destructive/20">
+                      <AlertTriangle className="w-6 h-6 text-destructive" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Borrowing Access Restricted</h2>
+                      <p className="text-sm text-muted-foreground">
+                        New borrowing requests are paused until your current obligations are resolved.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {standing.nextSteps.map((step) => (
+                      <p key={step} className="text-sm text-white/90">
+                        {step}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="pb-2">
               <h1 className="text-4xl md:text-6xl font-bold font-headline mb-4 text-white tracking-tight leading-tight">
@@ -164,6 +193,11 @@ export default function BorrowerDashboard() {
               <p className="text-muted-foreground text-lg font-light max-w-2xl">
                 System active. You have <span className="text-accent font-bold">{activeTransactions.length} items</span> in your possession.
               </p>
+              {standing.isRestricted && (
+                <p className="text-sm text-destructive font-semibold mt-3">
+                  Borrowing is temporarily restricted on your account.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3 bg-secondary/20 border border-border/50 p-4 rounded-2xl backdrop-blur-md h-fit shadow-xl">
               <div className="p-2 bg-accent/10 rounded-xl">
@@ -228,9 +262,11 @@ export default function BorrowerDashboard() {
               </CardHeader>
               <CardContent className="relative z-10">
                 <div className="text-5xl font-bold font-headline mb-1">
-                  {transactions.filter(t => t.status === 'returned').length > 0 ? "1" : "0"}
+                  {standing.isRestricted ? "1" : standing.hasComplied ? "1" : "0"}
                 </div>
-                <p className="text-xs text-muted-foreground font-medium">System notifications</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  {standing.isRestricted ? "Restriction notifications" : "System notifications"}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -322,8 +358,16 @@ export default function BorrowerDashboard() {
                           <AlertTriangle className="w-4 h-4 text-accent" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white mb-1">Verify Return Status</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">Please ensure all items are cleaned before returning to the Facilitator.</p>
+                          <p className="text-sm font-bold text-white mb-1">
+                            {standing.isRestricted ? "Restriction Active" : standing.hasComplied ? "Obligations Cleared" : "Verify Return Status"}
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {standing.isRestricted
+                              ? standing.nextSteps[0] || "Please settle your pending obligations before borrowing again."
+                              : standing.hasComplied
+                                ? "Your current obligations are cleared. The admin side can now confirm your status."
+                                : "Please ensure all items are cleaned before returning to the Facilitator."}
+                          </p>
                         </div>
                       </div>
                     </div>

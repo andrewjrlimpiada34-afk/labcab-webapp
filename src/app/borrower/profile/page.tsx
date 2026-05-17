@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, User as UserIcon, Mail, BookOpen, Save, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { normalizeUserProfile } from "@/lib/user-profile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function BorrowerProfile() {
   const [userData, setUserData] = useState<User | null>(null);
@@ -27,6 +28,7 @@ export default function BorrowerProfile() {
     name: "",
     email: "",
     course: "",
+    borrowerType: "student",
   });
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function BorrowerProfile() {
               name: data.name || "",
               email: data.email || "",
               course: data.course || "",
+              borrowerType: data.borrowerType || "student",
             });
             setLoading(false);
           },
@@ -85,6 +88,7 @@ export default function BorrowerProfile() {
         name: formData.name,
         email: formData.email,
         course: formData.course,
+        borrowerType: formData.borrowerType,
       });
 
       toast({
@@ -262,6 +266,22 @@ export default function BorrowerProfile() {
                       placeholder="e.g. BS in Chemistry"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest opacity-60">Borrower Type</Label>
+                  <Select
+                    value={formData.borrowerType}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, borrowerType: value }))}
+                  >
+                    <SelectTrigger className="bg-background/40 border-border focus:ring-primary">
+                      <SelectValue placeholder="Select borrower type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="pt-6">
