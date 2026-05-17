@@ -20,7 +20,8 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Camera
+  Camera,
+  User as UserIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -140,6 +141,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         { icon: LayoutDashboard, label: "Overview", href: "/borrower/dashboard" },
         { icon: History, label: "History", href: "/borrower/history" },
         { icon: Bell, label: "Notifications", href: "/borrower/notifications" },
+        { icon: UserIcon, label: "Profile Settings", href: "/borrower/profile" },
       ]
     : [
         { icon: LayoutDashboard, label: "Command Hub", href: "/admin/dashboard" },

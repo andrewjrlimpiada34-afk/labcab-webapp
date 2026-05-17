@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -9,7 +10,8 @@
         "name": { "type": "string" },
         "email": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "borrower"] },
-        "profilePic": { "type": "string" }
+        "profilePic": { "type": "string" },
+        "course": { "type": "string", "description": "Academic course or department" }
       },
       "required": ["uid", "email", "role"]
     },

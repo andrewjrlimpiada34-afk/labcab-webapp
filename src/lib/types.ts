@@ -5,10 +5,11 @@ export interface User {
   uid: string;
   name: string;
   email: string;
-  qrCode: string;
+  qrCode?: string;
   role: 'borrower' | 'admin';
   studentId?: string;
   profilePic?: string;
+  course?: string;
 }
 
 export interface Apparatus {
