@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,13 +19,16 @@ import {
   Unlock,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, db } from "@/firebase/config";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { User } from "@/lib/types";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,8 +41,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<User | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     setMounted(true);
@@ -51,11 +58,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.role === role) {
+          const data = userDoc.data() as User;
+          if (data.role === role) {
             setAuthorized(true);
+            setUserData(data);
           } else {
-            router.push(userData.role === 'admin' ? "/admin/dashboard" : "/borrower/dashboard");
+            router.push(data.role === 'admin' ? "/admin/dashboard" : "/borrower/dashboard");
           }
         } else {
           router.push("/login");
@@ -74,6 +82,44 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/login");
+  };
+
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth.currentUser) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "ml_default"); // You can change this to your Cloudinary preset
+
+    try {
+      // Note: Replace 'demo' with your Cloudinary cloud name
+      const response = await fetch(`https://api.cloudinary.com/v1_1/demo/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.secure_url) {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
+          profilePic: data.secure_url
+        });
+        setUserData(prev => prev ? { ...prev, profilePic: data.secure_url } : null);
+        toast({
+          title: "Profile Updated",
+          description: "Your new profile picture has been synchronized.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: "Could not upload image to Cloudinary.",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const menuItems = role === 'borrower' 
@@ -114,12 +160,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className={cn(
         "fixed lg:relative z-[70] h-full transition-all duration-300 ease-in-out border-r border-border bg-card flex flex-col shrink-0",
-        // Mobile behavior
         isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0",
-        // Desktop behavior
         !isSidebarOpen ? "lg:w-20" : "lg:w-64"
       )}>
-        {/* Toggle Button for Desktop */}
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="hidden lg:flex absolute -right-3 top-20 bg-primary text-primary-foreground rounded-full p-1 border border-border hover:scale-110 transition-transform z-[80]"
@@ -137,27 +180,41 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           )}>
             LabKiosk <span className="text-primary">Pro</span>
           </span>
-          {/* Close button for Mobile */}
           <Button variant="ghost" size="icon" className="lg:hidden ml-auto" onClick={() => setIsMobileOpen(false)}>
             <X size={20} />
           </Button>
         </div>
 
-        {/* User Profile Section - Prominent position at top */}
+        {/* User Profile Section */}
         <div className="px-4 mb-2">
           <div className={cn(
             "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
             !isSidebarOpen && "lg:justify-center lg:px-2"
           )}>
-            <Avatar className="w-9 h-9 border border-border shrink-0">
-              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                {role === 'admin' ? 'AD' : 'BR'}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative group/avatar shrink-0">
+              <Avatar className="w-9 h-9 border border-border shadow-inner">
+                {userData?.profilePic && (
+                  <AvatarImage src={userData.profilePic} className="object-cover" />
+                )}
+                <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-bold">
+                  {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : (role === 'admin' ? 'AD' : 'BR')}
+                </AvatarFallback>
+              </Avatar>
+              <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 cursor-pointer rounded-full transition-all duration-200 backdrop-blur-[2px]">
+                <Camera size={12} className="text-white" />
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleProfilePicUpload}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
             {isSidebarOpen && (
               <div className="overflow-hidden">
                 <p className="text-sm font-bold truncate leading-none mb-1 text-white">
-                  {auth.currentUser?.displayName || (role === 'admin' ? 'Lab Admin' : 'Scholar')}
+                  {userData?.name || (role === 'admin' ? 'Lab Admin' : 'Scholar')}
                 </p>
                 <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
                   {role === 'admin' ? 'Facilitator' : 'Borrower'}
@@ -205,7 +262,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
       {/* Main Content Container */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Mobile Navbar Header */}
         <header className="lg:hidden h-16 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0 z-50">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
             <Menu size={20} />
@@ -216,7 +272,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* Scrollable Main Area */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
           <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}

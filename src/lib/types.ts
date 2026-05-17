@@ -8,6 +8,7 @@ export interface User {
   qrCode: string;
   role: 'borrower' | 'admin';
   studentId?: string;
+  profilePic?: string;
 }
 
 export interface Apparatus {
