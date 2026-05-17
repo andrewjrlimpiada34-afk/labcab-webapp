@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -9,10 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Beaker, Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/Logo";
 
 export default function UnifiedLogin() {
   const [email, setEmail] = useState("");
@@ -35,7 +37,6 @@ export default function UnifiedLogin() {
         const userData = userDoc.data();
         const role = userData.role;
 
-        // Customizing the toast message based on role as requested
         const toastDescription = role === 'admin' 
           ? "Welcome, Admin!" 
           : `Welcome back, ${userData.name?.split(' ')[0] || 'Scholar'}.`;
@@ -62,32 +63,30 @@ export default function UnifiedLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
-      <Card className="w-full max-w-md border-border/50 bg-card/50 backdrop-blur-xl shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent/10 via-background to-background">
+      <Card className="w-full max-w-md border-border/50 bg-card/50 backdrop-blur-xl shadow-2xl rounded-3xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="p-3 bg-primary/10 rounded-2xl">
-              <Beaker className="w-10 h-10 text-primary" />
-            </div>
+            <Logo className="h-12" />
           </div>
           <div>
-            <CardTitle className="text-3xl font-headline font-bold">System Access</CardTitle>
-            <CardDescription className="text-muted-foreground mt-2">
-              Secure authentication for Laboratory Scholars and Facilitators
+            <CardTitle className="text-3xl font-headline font-bold">Secure Access</CardTitle>
+            <CardDescription className="text-muted-foreground mt-2 font-medium">
+              LabCab Authentication Gateway
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+              <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive rounded-xl">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Login Failed</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="font-bold text-xs uppercase tracking-widest opacity-70">Email Address</Label>
               <Input 
                 id="email" 
                 type="email" 
@@ -95,12 +94,12 @@ export default function UnifiedLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
-                className="bg-background/50 border-border focus:ring-primary"
+                className="bg-background/50 border-border focus:ring-accent rounded-xl h-12"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" title="Password" className="font-bold text-xs uppercase tracking-widest opacity-70">Password</Label>
               </div>
               <Input 
                 id="password" 
@@ -108,15 +107,15 @@ export default function UnifiedLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
-                className="bg-background/50 border-border focus:ring-primary"
+                className="bg-background/50 border-border focus:ring-accent rounded-xl h-12"
               />
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11" disabled={loading}>
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white h-12 rounded-xl font-bold shadow-lg shadow-accent/20 transition-all active:scale-95" disabled={loading}>
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Authorize Session"}
             </Button>
             <div className="text-center">
-              <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                &larr; Back to Home
+              <Link href="/" className="text-sm text-muted-foreground hover:text-accent transition-colors font-medium">
+                &larr; Return to Home
               </Link>
             </div>
           </form>

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { 
-  Beaker, 
   LayoutDashboard, 
   History, 
   Bell, 
@@ -30,6 +29,7 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/types";
+import { Logo } from "@/components/Logo";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -152,8 +152,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   if (!mounted || loading) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground font-headline animate-pulse tracking-widest text-xs uppercase">Verifying Laboratory Access...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-accent" />
+        <p className="text-muted-foreground font-headline animate-pulse tracking-widest text-xs uppercase">Connecting to LabCab Hub...</p>
       </div>
     );
   }
@@ -171,48 +171,40 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
       <aside className={cn(
         "fixed lg:relative z-[70] h-full transition-all duration-300 ease-in-out border-r border-border bg-card flex flex-col shrink-0",
-        isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0",
-        !isSidebarOpen ? "lg:w-20" : "lg:w-64"
+        isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72 lg:translate-x-0",
+        !isSidebarOpen ? "lg:w-20" : "lg:w-72"
       )}>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="hidden lg:flex absolute -right-3 top-20 bg-primary text-primary-foreground rounded-full p-1 border border-border hover:scale-110 transition-transform z-[80]"
+          className="hidden lg:flex absolute -right-3 top-10 bg-accent text-white rounded-full p-1 border border-border hover:scale-110 transition-transform z-[80]"
         >
           {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
 
-        <div className="p-6 flex items-center gap-3 shrink-0">
-          <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-            <Beaker className="w-6 h-6 text-primary" />
-          </div>
-          <span className={cn(
-            "font-headline font-bold text-lg whitespace-nowrap transition-all duration-300",
-            !isSidebarOpen && "lg:opacity-0 lg:hidden"
-          )}>
-            LabKiosk <span className="text-primary">Pro</span>
-          </span>
+        <div className="p-8 flex items-center shrink-0">
+          <Logo className={cn("transition-all duration-300", !isSidebarOpen ? "lg:w-10 overflow-hidden" : "h-10")} />
           <Button variant="ghost" size="icon" className="lg:hidden ml-auto" onClick={() => setIsMobileOpen(false)}>
             <X size={20} />
           </Button>
         </div>
 
-        {/* Fixed Profile at top */}
-        <div className="px-4 mb-2 shrink-0">
+        {/* Profile Identity Card */}
+        <div className="px-6 mb-4 shrink-0">
           <div className={cn(
-            "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
+            "flex items-center gap-4 p-4 rounded-2xl bg-secondary/30 border border-border transition-all duration-300",
             !isSidebarOpen && "lg:justify-center lg:px-2"
           )}>
             <div className="relative group/avatar shrink-0">
-              <Avatar className="w-9 h-9 border border-border shadow-inner">
+              <Avatar className="w-12 h-12 border-2 border-accent shadow-inner">
                 {userData?.profilePic && (
                   <AvatarImage src={userData.profilePic} className="object-cover" />
                 )}
-                <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-bold">
-                  {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : (role === 'admin' ? 'AD' : 'BR')}
+                <AvatarFallback className="bg-accent/20 text-accent text-xs font-bold">
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : (role === 'admin' ? 'AD' : 'BR')}
                 </AvatarFallback>
               </Avatar>
               <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 cursor-pointer rounded-full transition-all duration-200 backdrop-blur-[2px]">
-                <Camera size={12} className="text-white" />
+                <Camera size={14} className="text-white" />
                 <input 
                   type="file" 
                   className="hidden" 
@@ -225,9 +217,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             {isSidebarOpen && (
               <div className="overflow-hidden">
                 <p className="text-sm font-bold truncate leading-none mb-1 text-white">
-                  {userData?.name || (role === 'admin' ? 'Lab Admin' : 'Scholar')}
+                  {userData?.name || (role === 'admin' ? 'Lab Facilitator' : 'Scholar')}
                 </p>
-                <p className="text-[10px] uppercase tracking-widest text-primary font-bold">
+                <p className="text-[10px] uppercase tracking-widest text-accent font-bold">
                   {role === 'admin' ? 'Facilitator' : 'Borrower'}
                 </p>
               </div>
@@ -239,14 +231,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)}>
               <div className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-xl transition-all group cursor-pointer border border-transparent",
+                "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group cursor-pointer border border-transparent",
                 pathname === item.href 
-                  ? "bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(26,163,255,0.1)]" 
+                  ? "bg-accent/10 text-accent border-accent/20 shadow-[0_0_15px_rgba(255,136,0,0.1)]" 
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border"
               )}>
-                <item.icon className="w-5 h-5 shrink-0" />
+                <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", pathname === item.href && "text-accent")} />
                 <span className={cn(
-                  "font-medium transition-all duration-300 whitespace-nowrap",
+                  "font-bold text-sm transition-all duration-300 whitespace-nowrap",
                   !isSidebarOpen && "lg:opacity-0 lg:hidden"
                 )}>
                   {item.label}
@@ -256,34 +248,31 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border mt-auto shrink-0">
+        <div className="p-6 border-t border-border mt-auto shrink-0">
           <Button 
             variant="ghost" 
             className={cn(
-              "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/5 justify-start gap-3 rounded-xl transition-all",
+              "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/5 justify-start gap-4 rounded-2xl transition-all h-12",
               !isSidebarOpen && "lg:justify-center px-0"
             )}
             onClick={handleLogout}
           >
             <LogOut className="w-5 h-5 shrink-0" />
-            <span className={cn(!isSidebarOpen && "lg:hidden", "font-medium")}>Sign Out</span>
+            <span className={cn(!isSidebarOpen && "lg:hidden", "font-bold text-sm")}>Sign Out</span>
           </Button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        <header className="lg:hidden h-16 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0 z-50">
+        <header className="lg:hidden h-20 border-b border-border bg-card/50 backdrop-blur-xl flex items-center px-4 shrink-0 z-50">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
-            <Menu size={20} />
+            <Menu size={24} />
           </Button>
-          <div className="ml-3 flex items-center gap-2">
-            <Beaker className="w-5 h-5 text-primary" />
-            <span className="font-headline font-bold">LabKiosk Pro</span>
-          </div>
+          <Logo className="h-8 ml-4" />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
-          <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <main className="flex-1 overflow-y-auto p-6 lg:p-12 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-background to-background">
+          <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>
         </main>

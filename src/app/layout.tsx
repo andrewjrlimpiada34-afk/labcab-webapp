@@ -4,7 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'LabKiosk Pro | Laboratory Management',
+  title: 'LabCab | Laboratory Management',
   description: 'Next-generation laboratory equipment borrowing and monitoring system.',
 };
 
