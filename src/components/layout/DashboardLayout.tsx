@@ -88,14 +88,25 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     const file = e.target.files?.[0];
     if (!file || !auth.currentUser) return;
 
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset || cloudName === 'your_cloud_name') {
+      toast({
+        variant: "destructive",
+        title: "Configuration Required",
+        description: "Please set your Cloudinary environment variables in the .env file.",
+      });
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "ml_default"); // You can change this to your Cloudinary preset
+    formData.append("upload_preset", uploadPreset);
 
     try {
-      // Note: Replace 'demo' with your Cloudinary cloud name
-      const response = await fetch(`https://api.cloudinary.com/v1_1/demo/image/upload`, {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: "POST",
         body: formData,
       });
@@ -110,12 +121,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           title: "Profile Updated",
           description: "Your new profile picture has been synchronized.",
         });
+      } else {
+        throw new Error(data.error?.message || "Upload failed");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Could not upload image to Cloudinary.",
+        description: error.message || "Could not upload image to Cloudinary.",
       });
     } finally {
       setIsUploading(false);
@@ -185,7 +198,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {/* User Profile Section */}
+        {/* User Profile Section - Moved to Top */}
         <div className="px-4 mb-2">
           <div className={cn(
             "flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border transition-all duration-300",
@@ -272,6 +285,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
         </header>
 
+        {/* content area scrolls independently */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
           <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
