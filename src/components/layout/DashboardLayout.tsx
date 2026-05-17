@@ -309,7 +309,6 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
             <Menu size={24} />
           </Button>
-          <Logo className="h-8 ml-4" />
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-12 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-background to-background">
