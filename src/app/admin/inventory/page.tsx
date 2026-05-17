@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { db } from "@/firebase/config";
-import { collection, onSnapshot, doc, runTransaction } from "firebase/firestore";
+import { collection, onSnapshot, doc, runTransaction, updateDoc } from "firebase/firestore";
 import { Apparatus } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -102,10 +102,11 @@ export default function AdminInventory() {
                   <TableRow>
                     <TableHead>Asset Name</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead>Total</TableHead>
-                    <TableHead>Stock Level</TableHead>
+                    <TableHead className="hidden">Stock</TableHead>
+
                     <TableHead className="text-right">Actions</TableHead>
+
 
                   </TableRow>
                 </TableHeader>
@@ -118,47 +119,46 @@ export default function AdminInventory() {
                           {item.category.toUpperCase()}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{item.location}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={item.total ?? 0}
-                          onChange={(e) => {
-                            const nextTotal = Number(e.target.value);
-                            if (!Number.isFinite(nextTotal)) return;
 
-                            // Prevent invalid totals where stock would exceed total
-                            const clampedTotal = nextTotal < 0 ? 0 : nextTotal;
-                            if (clampedTotal < item.stock) {
-                              toast({
-                                variant: "destructive",
-                                title: "Invalid total",
-                                description: "Total cannot be less than current stock.",
-                              });
-                              return;
-                            }
-
-                            // Update total (and keep stock unchanged)
-                            updateDoc(doc(db, "apparatus", item.id), { total: clampedTotal }).catch(() => {
-                              toast({
-                                variant: "destructive",
-                                title: "Error",
-                                description: "Could not update total.",
-                              });
-                            });
-                          }}
-                          className="w-28 bg-card border-border"
-                        />
-                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={item.total ?? 0}
+                            onChange={(e) => {
+                              const nextTotal = Number(e.target.value);
+                              if (!Number.isFinite(nextTotal)) return;
+
+                              const clampedTotal = nextTotal < 0 ? 0 : nextTotal;
+                              if (clampedTotal < item.stock) {
+                                toast({
+                                  variant: "destructive",
+                                  title: "Invalid total",
+                                  description: "Total cannot be less than current stock.",
+                                });
+                                return;
+                              }
+
+                              updateDoc(doc(db, "apparatus", item.id), { total: clampedTotal }).catch(() => {
+                                toast({
+                                  variant: "destructive",
+                                  title: "Error",
+                                  description: "Could not update total.",
+                                });
+                              });
+                            }}
+                            className="w-16 bg-card border-border"
+                          />
+                          <span className="text-muted-foreground font-bold">{"-"}</span>
                           <span className={item.stock < 5 ? "text-destructive font-bold animate-pulse" : "font-mono font-bold"}>
                             {item.stock}
                           </span>
                           {item.stock < 5 && <span className="text-[10px] text-destructive uppercase font-bold tracking-tighter">Low</span>}
                         </div>
                       </TableCell>
+                      <TableCell className="hidden" />
+
 
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
