@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { auth, db } from "@/firebase/config";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Transaction } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { History, Search, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { History, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +22,13 @@ export default function BorrowerHistory() {
 
     const q = query(
       collection(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("borrowTime", "desc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTransactions(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+      setTransactions(sortedDocs);
       setLoading(false);
     });
 

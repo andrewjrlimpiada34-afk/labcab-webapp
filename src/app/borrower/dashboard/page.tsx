@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { auth, db } from "@/firebase/config";
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { Transaction, User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, AlertTriangle, CheckCircle2, Package, Loader2, Calendar } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, Package, Loader2, Calendar, History } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,6 @@ export default function BorrowerDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Fetch User Profile for first name
     const fetchUser = async () => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
@@ -30,16 +29,15 @@ export default function BorrowerDashboard() {
     };
     fetchUser();
 
-    // Fetch Transactions
     const q = query(
       collection(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("borrowTime", "desc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-      setTransactions(docs);
+      const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+      setTransactions(sortedDocs);
       setLoading(false);
     });
 
@@ -73,7 +71,6 @@ export default function BorrowerDashboard() {
           </p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-card/30 border-primary/20 hover:border-primary/50 transition-all duration-500 backdrop-blur-xl group overflow-hidden relative rounded-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -129,7 +126,6 @@ export default function BorrowerDashboard() {
           </Card>
         </div>
 
-        {/* Active Items Table */}
         <Card className="border-border/50 bg-card/10 backdrop-blur-3xl overflow-hidden rounded-3xl shadow-2xl">
           <CardHeader className="bg-secondary/10 border-b border-border/50 px-8 py-6">
             <CardTitle className="font-headline text-2xl flex items-center gap-4">
@@ -191,7 +187,6 @@ export default function BorrowerDashboard() {
           </CardContent>
         </Card>
 
-        {/* History Preview */}
         <div className="space-y-6">
           <h3 className="text-2xl font-headline font-bold px-2 flex items-center gap-3">
             <History className="text-muted-foreground w-6 h-6" />

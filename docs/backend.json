@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information and role.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "borrower"] },
+        "profilePic": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Apparatus": {
+      "title": "Apparatus",
+      "description": "Laboratory equipment details.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "stock": { "type": "number" },
+        "category": { "type": "string" },
+        "location": { "type": "string" }
+      },
+      "required": ["name", "stock", "category", "location"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Log of borrowed and returned equipment.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "returned"] },
+        "borrowTime": { "type": "object", "description": "Firestore Timestamp" },
+        "deadline": { "type": "string", "format": "date-time" },
+        "returnTime": { "type": "object", "description": "Firestore Timestamp" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemId": { "type": "string" },
+              "name": { "type": "string" },
+              "quantity": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["userId", "userName", "status", "borrowTime", "deadline", "items"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "User profiles"
+    },
+    "/apparatus/{itemId}": {
+      "schema": { "$ref": "#/backend/entities/Apparatus" },
+      "description": "Inventory items"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/backend/entities/Transaction" },
+      "description": "Activity logs"
+    }
+  }
+}
