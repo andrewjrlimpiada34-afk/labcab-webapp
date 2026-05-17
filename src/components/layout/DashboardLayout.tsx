@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, db } from "@/firebase/config";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/lib/types";
 import { Logo } from "@/components/Logo";
@@ -51,6 +51,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
   useEffect(() => {
     setMounted(true);
+    let unsubscribeUser: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         router.push("/login");
@@ -58,27 +60,41 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       }
 
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = normalizeUserProfile(userDoc.data(), user);
-          if (data.role === role) {
-            setAuthorized(true);
-            setUserData(data);
-          } else {
-            router.push(data.role === 'admin' ? "/admin/dashboard" : "/borrower/dashboard");
+        unsubscribeUser = onSnapshot(
+          doc(db, "users", user.uid),
+          (userDoc) => {
+            if (!userDoc.exists()) {
+              router.push("/login");
+              return;
+            }
+
+            const data = normalizeUserProfile(userDoc.data(), user);
+            if (data.role === role) {
+              setAuthorized(true);
+              setUserData(data);
+            } else {
+              router.push(data.role === "admin" ? "/admin/dashboard" : "/borrower/dashboard");
+            }
+
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Auth check failed:", err);
+            router.push("/login");
+            setLoading(false);
           }
-        } else {
-          router.push("/login");
-        }
+        );
       } catch (err) {
         console.error("Auth check failed:", err);
         router.push("/login");
-      } finally {
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeUser) unsubscribeUser();
+    };
   }, [role, router]);
 
   const handleLogout = async () => {
@@ -123,15 +139,18 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           title: "Profile Updated",
           description: "Your picture has been synchronized.",
         });
+      } else {
+        throw new Error(data?.error?.message || "No image URL returned from Cloudinary.");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Could not upload to Cloudinary.",
+        description: error?.message || "Could not upload to Cloudinary.",
       });
     } finally {
       setIsUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -182,8 +201,13 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
 
-        <div className="p-8 flex items-center shrink-0">
-          <Logo className={cn("transition-all duration-300", !isSidebarOpen ? "lg:w-10 overflow-hidden" : "h-10")} />
+        <div
+          className={cn(
+            "p-8 flex items-center shrink-0 transition-all duration-300",
+            !isSidebarOpen && "lg:h-0 lg:px-0 lg:py-0 lg:opacity-0 lg:overflow-hidden"
+          )}
+        >
+          <Logo className="h-10 transition-all duration-300" />
           <Button variant="ghost" size="icon" className="lg:hidden ml-auto" onClick={() => setIsMobileOpen(false)}>
             <X size={20} />
           </Button>
@@ -203,7 +227,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             <div className="relative group/avatar shrink-0">
               <Avatar className="w-12 h-12 border-2 border-accent shadow-inner">
                 {userData?.profilePic && (
-                  <AvatarImage src={userData.profilePic} className="object-cover" />
+                  <AvatarImage key={userData.profilePic} src={userData.profilePic} className="object-cover" />
                 )}
                 <AvatarFallback className="bg-accent/20 text-accent text-xs font-bold">
                   {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : (role === 'admin' ? 'AD' : 'BR')}
@@ -233,11 +257,17 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+        <nav
+          className={cn(
+            "flex-1 px-4 py-4 space-y-2 overflow-y-auto transition-all duration-300",
+            !isSidebarOpen && "lg:flex lg:flex-col lg:justify-center lg:items-start lg:gap-3 lg:space-y-0 lg:overflow-hidden"
+          )}
+        >
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)}>
               <div className={cn(
-                "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all group cursor-pointer border border-transparent",
+                "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group cursor-pointer border border-transparent",
+                !isSidebarOpen && "lg:w-12 lg:h-12 lg:px-0 lg:py-0 lg:justify-center",
                 pathname === item.href 
                   ? "bg-accent/10 text-accent border-accent/20 shadow-[0_0_15px_rgba(255,136,0,0.1)]" 
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:border-border"
@@ -254,7 +284,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           ))}
         </nav>
 
-        <div className="p-6 border-t border-border mt-auto shrink-0">
+        <div
+          className={cn(
+            "p-6 border-t border-border mt-auto shrink-0 transition-all duration-300",
+            !isSidebarOpen && "lg:px-4"
+          )}
+        >
           <Button 
             variant="ghost" 
             className={cn(

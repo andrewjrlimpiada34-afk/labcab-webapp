@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { auth, db } from "@/firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,28 +30,44 @@ export default function BorrowerProfile() {
   });
 
   useEffect(() => {
+    let unsubscribeUser: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return;
 
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = normalizeUserProfile(userDoc.data(), user);
-          setUserData(data);
-          setFormData({
-            name: data.name || "",
-            email: data.email || "",
-            course: data.course || "",
-          });
-        }
+        unsubscribeUser = onSnapshot(
+          doc(db, "users", user.uid),
+          (userDoc) => {
+            if (!userDoc.exists()) {
+              setLoading(false);
+              return;
+            }
+
+            const data = normalizeUserProfile(userDoc.data(), user);
+            setUserData(data);
+            setFormData({
+              name: data.name || "",
+              email: data.email || "",
+              course: data.course || "",
+            });
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Error fetching profile:", err);
+            setLoading(false);
+          }
+        );
       } catch (err) {
         console.error("Error fetching profile:", err);
-      } finally {
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeUser) unsubscribeUser();
+    };
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,15 +139,18 @@ export default function BorrowerProfile() {
           title: "Picture Uploaded",
           description: "Your profile image has been updated.",
         });
+      } else {
+        throw new Error(data?.error?.message || "No image URL returned from Cloudinary.");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Cloudinary error occurred.",
+        description: error?.message || "Cloudinary error occurred.",
       });
     } finally {
       setIsUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -164,7 +183,7 @@ export default function BorrowerProfile() {
             <CardContent className="flex flex-col items-center gap-6 pt-4">
               <div className="relative group">
                 <Avatar className="w-32 h-32 border-4 border-primary/20 shadow-2xl">
-                  {userData?.profilePic && <AvatarImage src={userData.profilePic} className="object-cover" />}
+                  {userData?.profilePic && <AvatarImage key={userData.profilePic} src={userData.profilePic} className="object-cover" />}
                   <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
                     {userData?.name?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
