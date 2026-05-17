@@ -19,7 +19,6 @@ export default function BorrowerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Robust auth listener to ensure we have the user before fetching
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         setLoading(false);
@@ -28,14 +27,19 @@ export default function BorrowerDashboard() {
 
       // Fetch user profile details
       const fetchUser = async () => {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as User);
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserData(userDoc.data() as User);
+          }
+        } catch (e) {
+          console.error("Error fetching user:", e);
         }
       };
       fetchUser();
 
       // Setup real-time transactions listener
+      // We remove orderBy from query to avoid index requirements and sort client-side
       const q = query(
         collection(db, "transactions"),
         where("userId", "==", user.uid)
@@ -43,8 +47,14 @@ export default function BorrowerDashboard() {
 
       const unsubscribeSnap = onSnapshot(q, (snapshot) => {
         const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-        // Manual sorting to avoid composite index requirement
-        const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+        
+        // Safe sorting: Handle cases where borrowTime might be null/missing
+        const sortedDocs = docs.sort((a, b) => {
+          const timeA = a.borrowTime?.toMillis?.() || 0;
+          const timeB = b.borrowTime?.toMillis?.() || 0;
+          return timeB - timeA;
+        });
+
         setTransactions(sortedDocs);
         setLoading(false);
       }, (error) => {
@@ -62,7 +72,7 @@ export default function BorrowerDashboard() {
   const activeTransactions = transactions.filter(t => t.status === 'active');
   const overdueCount = activeTransactions.filter(t => {
     try {
-      return new Date(t.deadline) < new Date();
+      return t.deadline && new Date(t.deadline) < new Date();
     } catch {
       return false;
     }
@@ -175,7 +185,7 @@ export default function BorrowerDashboard() {
                   </TableHeader>
                   <TableBody>
                     {activeTransactions.map((tx) => {
-                      const isOverdue = new Date(tx.deadline) < new Date();
+                      const isOverdue = tx.deadline && new Date(tx.deadline) < new Date();
                       return (
                         <TableRow key={tx.id} className="border-border/50 hover:bg-primary/5 transition-colors group">
                           <TableCell className="font-bold py-7 pl-8 text-base">
@@ -184,11 +194,11 @@ export default function BorrowerDashboard() {
                           <TableCell className="text-muted-foreground font-medium text-sm">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 opacity-40" />
-                              {format(tx.borrowTime.toDate(), "MMM dd, yyyy")}
+                              {tx.borrowTime ? format(tx.borrowTime.toDate(), "MMM dd, yyyy") : "Pending..."}
                             </div>
                           </TableCell>
                           <TableCell className={cn("font-bold text-sm", isOverdue ? "text-destructive" : "text-primary")}>
-                            {format(new Date(tx.deadline), "MMM dd, yyyy")}
+                            {tx.deadline ? format(new Date(tx.deadline), "MMM dd, yyyy") : "N/A"}
                           </TableCell>
                           <TableCell className="text-right pr-8">
                             {isOverdue ? (
@@ -224,7 +234,7 @@ export default function BorrowerDashboard() {
                       <TableCell className="text-muted-foreground text-xs font-mono uppercase tracking-widest">
                         {tx.status === 'returned' && tx.returnTime 
                           ? `Returned ${format(tx.returnTime.toDate(), "MMM dd, HH:mm")}`
-                          : `Borrowed ${format(tx.borrowTime.toDate(), "MMM dd, HH:mm")}`
+                          : `Borrowed ${tx.borrowTime ? format(tx.borrowTime.toDate(), "MMM dd, HH:mm") : 'Pending'}`
                         }
                       </TableCell>
                       <TableCell className="text-right pr-8">

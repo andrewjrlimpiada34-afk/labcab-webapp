@@ -31,7 +31,14 @@ export default function BorrowerHistory() {
 
       const unsubscribeSnap = onSnapshot(q, (snapshot) => {
         const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
-        const sortedDocs = docs.sort((a, b) => b.borrowTime.toMillis() - a.borrowTime.toMillis());
+        
+        // Safe sorting client-side
+        const sortedDocs = docs.sort((a, b) => {
+          const timeA = a.borrowTime?.toMillis?.() || 0;
+          const timeB = b.borrowTime?.toMillis?.() || 0;
+          return timeB - timeA;
+        });
+
         setTransactions(sortedDocs);
         setLoading(false);
       }, (error) => {
@@ -108,7 +115,7 @@ export default function BorrowerHistory() {
                         <TableCell className="text-muted-foreground">
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 opacity-40" />
-                            {format(tx.borrowTime.toDate(), "MMM dd, yyyy")}
+                            {tx.borrowTime ? format(tx.borrowTime.toDate(), "MMM dd, yyyy") : "Pending..."}
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">

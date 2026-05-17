@@ -29,9 +29,17 @@ export default function AdminDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const qTx = query(collection(db, "transactions"), orderBy("borrowTime", "desc"), limit(10));
+    // Remove complex orderBy to avoid index requirement during dev
+    const qTx = query(collection(db, "transactions"), limit(20));
     const unsubscribeTx = onSnapshot(qTx, (snapshot) => {
-      setTransactions(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      // Safe sorting client-side
+      const sorted = docs.sort((a, b) => {
+        const tA = a.borrowTime?.toMillis?.() || 0;
+        const tB = b.borrowTime?.toMillis?.() || 0;
+        return tB - tA;
+      });
+      setTransactions(sorted.slice(0, 10));
     });
 
     const qInv = query(collection(db, "apparatus"));
@@ -180,7 +188,7 @@ export default function AdminDashboard() {
                           {tx.items.map(i => i.name).join(", ")}
                         </TableCell>
                         <TableCell className="text-sm font-mono opacity-60">
-                          {format(tx.borrowTime.toDate(), "HH:mm:ss")}
+                          {tx.borrowTime ? format(tx.borrowTime.toDate(), "HH:mm:ss") : "..."}
                         </TableCell>
                         <TableCell className="text-right pr-8">
                           <Badge 
